@@ -137,9 +137,14 @@ export class StepReadyHandler {
 		if (!recorded) return;
 
 		// A wait is no outcome: nothing settled, so nothing is announced and no
-		// planning follows. TODO(CAT-2928): publish `step:waiting` so the UI can show it.
+		// planning follows. The execution's own status follows the step's, so it
+		// reports `waiting` once this was the last step that could run.
+		// TODO(CAT-2928): publish `step:waiting` so the UI can show it.
 		if (run.kind === 'wait') {
+			// Re-arm before the status write. That write is a round trip, and the
+			// deadline can be nearer than the round trip takes.
 			this.onStepSuspended();
+			await this.executionStore.refreshLiveStatus(execution.id);
 			return;
 		}
 
