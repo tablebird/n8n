@@ -444,7 +444,7 @@ export function handleExecutionFinishedWithErrorOrCanceled(
 			});
 
 			const { showPolicyViolationToast } = usePolicyViolationToast();
-			const policyTitle = i18n.baseText('typeAvailabilityPolicies.violations.runTitle');
+			const policyTitle = i18n.baseText('typeAvailabilityPolicies.violations.executeTitle');
 
 			if (
 				!showPolicyViolationToast(execution.data.resultData.error, policyTitle, 'run', documentId)

@@ -1016,7 +1016,7 @@ describe('manual execution stats tracking', () => {
 
 			expect(mockShowPolicyViolationToast).toHaveBeenCalledWith(
 				error,
-				'Workflow could not run',
+				'Problem executing workflow',
 				'run',
 				createWorkflowDocumentId(''),
 			);

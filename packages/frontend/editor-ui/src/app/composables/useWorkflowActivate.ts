@@ -279,7 +279,9 @@ export function useWorkflowActivate() {
 					interpolate: { newStateName: 'published' },
 				});
 
-				if (!showPolicyViolationToast(error, title, 'publish')) {
+				const policyTitle = i18n.baseText('typeAvailabilityPolicies.violations.publishTitle');
+
+				if (!showPolicyViolationToast(error, policyTitle, 'publish')) {
 					activationErrorNodeId.value = error.meta?.nodeId as string | undefined;
 					toast.showError(error, title, {
 						message: activationErrorMessage.value,
