@@ -139,6 +139,7 @@ export function useAssistantMentionSources(providers: readonly MentionSourceProv
 		requestGeneration++;
 		currentQuery = '';
 		currentMode = undefined;
+		isBrowsing.value = false;
 		isSearching.value = false;
 		searchItemsByProvider.clear();
 		searchResults.value = [];
