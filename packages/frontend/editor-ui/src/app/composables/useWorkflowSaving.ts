@@ -141,10 +141,11 @@ export function useWorkflowSaving({
 	const settingsStore = useSettingsStore();
 	const workflowId = useWorkflowId();
 	const { removeInvalidNodeGroups } = useInvalidNodeGroupCleanup();
-	const { showPolicyViolationToast } = usePolicyViolationToast();
+	const { showPolicyViolationToast, closePolicyViolationToast } = usePolicyViolationToast();
 
 	function showSaveErrorToast(error: unknown, errorMessage: string, retryDelay?: number) {
-		if (showPolicyViolationToast(error, i18n.baseText('workflowHelpers.showMessage.title'))) return;
+		const title = i18n.baseText('workflowHelpers.showMessage.title');
+		if (showPolicyViolationToast(error, title, 'save')) return;
 
 		toast.showMessage({
 			title: i18n.baseText('workflowHelpers.showMessage.title'),
@@ -504,6 +505,7 @@ export function useWorkflowSaving({
 
 				// Reset retry count on successful save
 				saveStore.resetRetry();
+				closePolicyViolationToast('save');
 
 				onSaved?.(false); // Update of existing workflow
 				return true;
@@ -751,6 +753,7 @@ export function useWorkflowSaving({
 				if (!autosaved) cancelAutoSave();
 			}
 			void useExternalHooks().run('workflow.afterUpdate', { workflowData });
+			closePolicyViolationToast('save');
 
 			onSaved?.(true); // First save of new workflow
 			return workflowData.id;

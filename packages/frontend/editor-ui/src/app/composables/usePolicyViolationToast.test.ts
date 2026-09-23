@@ -78,7 +78,9 @@ describe('usePolicyViolationToast', () => {
 
 		const { showPolicyViolationToast } = usePolicyViolationToast();
 
-		expect(showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving')).toBe(true);
+		expect(showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving', 'save')).toBe(
+			true,
+		);
 		expect(showMessageSpy).toHaveBeenCalledTimes(1);
 
 		const toastOptions = showMessageSpy.mock.calls[0][0];
@@ -100,11 +102,31 @@ describe('usePolicyViolationToast', () => {
 	it('closes the toast it showed before it shows the next one', () => {
 		const { showPolicyViolationToast } = usePolicyViolationToast();
 
-		showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving');
+		showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving', 'save');
 		closeSpy.mockClear();
-		showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving');
+		showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving', 'save');
 
 		expect(closeSpy).toHaveBeenCalledTimes(1);
+	});
+
+	it('closes a save refusal once a save succeeds', () => {
+		const { showPolicyViolationToast, closePolicyViolationToast } = usePolicyViolationToast();
+
+		showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving', 'save');
+		closeSpy.mockClear();
+		closePolicyViolationToast('save');
+
+		expect(closeSpy).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps a publish refusal open after a save succeeds', () => {
+		const { showPolicyViolationToast, closePolicyViolationToast } = usePolicyViolationToast();
+
+		showPolicyViolationToast(refusedWith([slackViolation]), 'Could not publish', 'publish');
+		closeSpy.mockClear();
+		closePolicyViolationToast('save');
+
+		expect(closeSpy).not.toHaveBeenCalled();
 	});
 
 	it('offers no jump when the open workflow holds no node of the refused type', () => {
@@ -112,7 +134,9 @@ describe('usePolicyViolationToast', () => {
 
 		const { showPolicyViolationToast } = usePolicyViolationToast();
 
-		expect(showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving')).toBe(true);
+		expect(showPolicyViolationToast(refusedWith([slackViolation]), 'Problem saving', 'save')).toBe(
+			true,
+		);
 
 		const { queryByTestId } = render(
 			defineComponent({ render: () => showMessageSpy.mock.calls[0][0].message }),
@@ -124,7 +148,11 @@ describe('usePolicyViolationToast', () => {
 		const { showPolicyViolationToast } = usePolicyViolationToast();
 
 		expect(
-			showPolicyViolationToast(new ResponseError('Bad request', { httpStatusCode: 400 }), 'Oops'),
+			showPolicyViolationToast(
+				new ResponseError('Bad request', { httpStatusCode: 400 }),
+				'Oops',
+				'save',
+			),
 		).toBe(false);
 		expect(showMessageSpy).not.toHaveBeenCalled();
 	});

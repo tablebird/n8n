@@ -51,7 +51,7 @@ export function useWorkflowActivate() {
 	const i18n = useI18n();
 	const collaborationStore = useCollaborationStore();
 	const { errorMessage: activationErrorMessage } = useActivationError(activationErrorNodeId);
-	const { showPolicyViolationToast } = usePolicyViolationToast();
+	const { showPolicyViolationToast, closePolicyViolationToast } = usePolicyViolationToast();
 
 	const parseWebhookConflictError = (error: ResponseError) => {
 		try {
@@ -266,6 +266,7 @@ export function useWorkflowActivate() {
 			if (shouldShowActivationModal && !activationIsConfirmedByPush) {
 				uiStore.openModal(WORKFLOW_ACTIVE_MODAL_KEY);
 			}
+			closePolicyViolationToast('publish');
 			return { success: true };
 		} catch (error) {
 			clearPendingActivationModal(workflowId);
@@ -278,7 +279,7 @@ export function useWorkflowActivate() {
 					interpolate: { newStateName: 'published' },
 				});
 
-				if (!showPolicyViolationToast(error, title)) {
+				if (!showPolicyViolationToast(error, title, 'publish')) {
 					activationErrorNodeId.value = error.meta?.nodeId as string | undefined;
 					toast.showError(error, title, {
 						message: activationErrorMessage.value,

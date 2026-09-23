@@ -138,11 +138,13 @@ vi.mock('@n8n/composables/useToast', () => ({
 }));
 
 const mockShowPolicyViolationToast = vi.hoisted(() => vi.fn(() => false));
+const mockClosePolicyViolationToast = vi.hoisted(() => vi.fn());
 
 vi.mock('@/app/composables/usePolicyViolationToast', () => ({
-	usePolicyViolationToast: vi
-		.fn()
-		.mockReturnValue({ showPolicyViolationToast: mockShowPolicyViolationToast }),
+	usePolicyViolationToast: vi.fn().mockReturnValue({
+		showPolicyViolationToast: mockShowPolicyViolationToast,
+		closePolicyViolationToast: mockClosePolicyViolationToast,
+	}),
 }));
 
 // Models the "Don't show again" flag of the activation success modal.
@@ -227,6 +229,7 @@ describe('useWorkflowActivate', () => {
 
 			expect(result).toEqual({ success: true });
 			expect(mockSetPublicationStatus).not.toHaveBeenCalled();
+			expect(mockClosePolicyViolationToast).toHaveBeenCalledWith('publish');
 		});
 
 		it('does NOT set publicationStatus when the publish request fails', async () => {
@@ -252,7 +255,11 @@ describe('useWorkflowActivate', () => {
 			const result = await publishWorkflow(WORKFLOW_ID, VERSION_ID);
 
 			expect(result).toEqual({ success: false, errorHandled: true });
-			expect(mockShowPolicyViolationToast).toHaveBeenCalledWith(refusal, expect.any(String));
+			expect(mockShowPolicyViolationToast).toHaveBeenCalledWith(
+				refusal,
+				expect.any(String),
+				'publish',
+			);
 			expect(mockShowError).not.toHaveBeenCalled();
 			expect(mockSetWorkflowInactive).toHaveBeenCalledWith(WORKFLOW_ID);
 		});

@@ -58,9 +58,13 @@ vi.mock('@/app/composables/useMessage', () => {
 
 const showMessageSpy = vi.hoisted(() => vi.fn());
 const showPolicyViolationToastSpy = vi.hoisted(() => vi.fn(() => false));
+const closePolicyViolationToastSpy = vi.hoisted(() => vi.fn());
 
 vi.mock('@/app/composables/usePolicyViolationToast', () => ({
-	usePolicyViolationToast: () => ({ showPolicyViolationToast: showPolicyViolationToastSpy }),
+	usePolicyViolationToast: () => ({
+		showPolicyViolationToast: showPolicyViolationToastSpy,
+		closePolicyViolationToast: closePolicyViolationToastSpy,
+	}),
 }));
 
 vi.mock('@n8n/composables/useToast', () => ({
@@ -939,8 +943,26 @@ describe('useWorkflowSaving', () => {
 			const { saveCurrentWorkflow } = useWorkflowSaving({ router });
 
 			expect(await saveCurrentWorkflow({ id: workflow.id })).toBe(false);
-			expect(showPolicyViolationToastSpy).toHaveBeenCalledWith(refusal, 'Problem saving workflow');
+			expect(showPolicyViolationToastSpy).toHaveBeenCalledWith(
+				refusal,
+				'Problem saving workflow',
+				'save',
+			);
 			expect(showMessageSpy).not.toHaveBeenCalled();
+		});
+
+		it('closes the policy violation toast once a save succeeds', async () => {
+			const { workflow } = prepareHydratedWorkflow('w-policy-settled');
+			setDocumentStoreActive(workflow.id);
+			vi.spyOn(workflowsStore, 'updateWorkflow').mockResolvedValue({
+				...workflow,
+				checksum: 'test-checksum',
+			});
+
+			const { saveCurrentWorkflow } = useWorkflowSaving({ router });
+
+			expect(await saveCurrentWorkflow({ id: workflow.id })).toBe(true);
+			expect(closePolicyViolationToastSpy).toHaveBeenCalledWith('save');
 		});
 
 		it('shows the generic error toast when a refused save carries no violations', async () => {
@@ -954,7 +976,11 @@ describe('useWorkflowSaving', () => {
 			const { saveCurrentWorkflow } = useWorkflowSaving({ router });
 
 			expect(await saveCurrentWorkflow({ id: workflow.id })).toBe(false);
-			expect(showPolicyViolationToastSpy).toHaveBeenCalledWith(refusal, 'Problem saving workflow');
+			expect(showPolicyViolationToastSpy).toHaveBeenCalledWith(
+				refusal,
+				'Problem saving workflow',
+				'save',
+			);
 			expect(showMessageSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					title: 'Problem saving workflow',

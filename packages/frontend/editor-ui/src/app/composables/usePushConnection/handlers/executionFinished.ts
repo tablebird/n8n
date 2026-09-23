@@ -445,7 +445,7 @@ export function handleExecutionFinishedWithErrorOrCanceled(
 
 			const { showPolicyViolationToast } = usePolicyViolationToast();
 
-			if (!showPolicyViolationToast(execution.data.resultData.error, title, documentId)) {
+			if (!showPolicyViolationToast(execution.data.resultData.error, title, 'run', documentId)) {
 				toast.showMessage({ title, message, type: 'error', duration: 0 });
 			}
 		}

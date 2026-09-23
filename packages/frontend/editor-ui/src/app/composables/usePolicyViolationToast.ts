@@ -14,7 +14,9 @@ import {
 	type WorkflowDocumentId,
 } from '@/app/stores/workflowDocument.store';
 
-let activeToast: NotificationHandle | undefined;
+type PolicyRefusedAction = 'save' | 'publish' | 'run';
+
+let activeToast: { handle: NotificationHandle; refusedAction: PolicyRefusedAction } | undefined;
 
 const NODE_TYPE_SUBJECT = 'nodeType';
 
@@ -39,6 +41,7 @@ export function usePolicyViolationToast() {
 	function showPolicyViolationToast(
 		error: unknown,
 		title: string,
+		refusedAction: PolicyRefusedAction,
 		documentId: WorkflowDocumentId = createWorkflowDocumentId(workflowsStore.workflowId),
 	): boolean {
 		const violations = getPolicyViolations(error);
@@ -60,8 +63,8 @@ export function usePolicyViolationToast() {
 			if (ids.length > 0) nodeIdsBySubject.set(subject, ids);
 		}
 
-		activeToast?.close();
-		activeToast = toast.showMessage({
+		activeToast?.handle.close();
+		const handle = toast.showMessage({
 			title,
 			type: 'error',
 			duration: 0,
@@ -75,9 +78,18 @@ export function usePolicyViolationToast() {
 				},
 			}),
 		});
+		activeToast = { handle, refusedAction };
 
 		return true;
 	}
 
-	return { showPolicyViolationToast };
+	/**
+	 * A successful save only settles a refused save: save grandfathers the stored node types,
+	 * so a publish or run refusal can still apply after it.
+	 */
+	function closePolicyViolationToast(resolvedAction: PolicyRefusedAction) {
+		if (activeToast?.refusedAction === resolvedAction) activeToast.handle.close();
+	}
+
+	return { showPolicyViolationToast, closePolicyViolationToast };
 }
