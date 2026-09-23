@@ -9,6 +9,7 @@ import { ResponseError } from '@n8n/rest-api-client';
 import { createTestNode, createTestWorkflow, mockNodeTypeDescription } from '@/__tests__/mocks';
 import { mockedStore } from '@/__tests__/utils';
 import { useNodeTypesStore } from '@/app/stores/nodeTypes.store';
+import { useCredentialsStore } from '@/features/credentials/credentials.store';
 import { canvasEventBus } from '@/features/workflows/canvas/canvas.eventBus';
 import { useWorkflowsStore } from '@/app/stores/workflows.store';
 import {
@@ -87,7 +88,7 @@ describe('usePolicyViolationToast', () => {
 		expect(toastOptions).toMatchObject({ title: 'Problem saving', type: 'error', duration: 0 });
 
 		const { getByTestId } = render(defineComponent({ render: () => toastOptions.message }));
-		expect(getByTestId('policy-violation')).toHaveTextContent("Node type 'Slack'");
+		expect(getByTestId('policy-violation')).toHaveTextContent('Slack node');
 
 		await userEvent.click(getByTestId('policy-violation-jump'));
 
@@ -95,6 +96,54 @@ describe('usePolicyViolationToast', () => {
 			ids: ['slack-1', 'slack-2'],
 			panIntoView: true,
 		});
+
+		emitSpy.mockRestore();
+	});
+
+	it('names a blocked credential type and jumps to the nodes that use it', async () => {
+		const workflow = createTestWorkflow({
+			id: 'w-credentials',
+			nodes: [
+				createTestNode({
+					id: 'github-1',
+					name: 'GitHub',
+					type: 'n8n-nodes-base.github',
+					credentials: { githubApi: { id: 'c1', name: 'GitHub account' } },
+				}),
+				createTestNode({ id: 'set-1', name: 'Set', type: 'n8n-nodes-base.set' }),
+			],
+		});
+		useWorkflowsStore().setWorkflowId(workflow.id);
+		useWorkflowDocumentStore(createWorkflowDocumentId(workflow.id)).hydrate(workflow);
+		mockedStore(useCredentialsStore).getCredentialTypeByName = vi
+			.fn()
+			.mockReturnValue({ name: 'githubApi', displayName: 'GitHub API', properties: [] });
+		const emitSpy = vi.spyOn(canvasEventBus, 'emit');
+
+		const { showPolicyViolationToast } = usePolicyViolationToast();
+		showPolicyViolationToast(
+			refusedWith([
+				{
+					kind: 'credential-type-unavailable',
+					checkId: 'credential-type-availability',
+					message: 'Credential type "githubApi" is blocked by an instance policy',
+					subject: 'githubApi',
+					subjectType: 'credentialType',
+					scope: 'instance',
+				},
+			]),
+			'Problem saving',
+			'save',
+		);
+
+		const { getByTestId } = render(
+			defineComponent({ render: () => showMessageSpy.mock.calls[0][0].message }),
+		);
+		expect(getByTestId('policy-violation')).toHaveTextContent('GitHub API credential');
+
+		await userEvent.click(getByTestId('policy-violation-jump'));
+
+		expect(emitSpy).toHaveBeenCalledWith('nodes:select', { ids: ['github-1'], panIntoView: true });
 
 		emitSpy.mockRestore();
 	});
