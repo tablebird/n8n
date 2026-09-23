@@ -43,7 +43,10 @@ describe('AgentInterruptedExecutionSweeper', () => {
 
 		await sweeper.sweep();
 
-		expect(executionService.finalizeInterruptedExecution).toHaveBeenCalledWith(execution);
+		expect(executionService.finalizeInterruptedExecution).toHaveBeenCalledWith(
+			execution,
+			expect.any(Date),
+		);
 	});
 
 	it('leaves a recently active execution running in another process', async () => {

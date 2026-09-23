@@ -117,6 +117,10 @@ export class AgentsModule implements ModuleInterface {
 		const logger = Container.get(Logger);
 		const instanceSettings = Container.get(InstanceSettings);
 		if (instanceSettings.instanceType === 'main') {
+			const { AgentMessageQueueConsumer } = await import(
+				'./agent-message-queue-consumer.service.js'
+			);
+			Container.get(AgentMessageQueueConsumer).start();
 			// Loaded for its pubsub decorator
 			await import('./background/agent-background-job.service.js');
 			await import('./background/agent-wake.service.js');
@@ -229,6 +233,7 @@ export class AgentsModule implements ModuleInterface {
 		const { AgentMessageEntity } = await import('./entities/agent-message.entity.js');
 		const { AgentExecutionThread } = await import('./entities/agent-execution-thread.entity.js');
 		const { AgentExecution } = await import('./entities/agent-execution.entity.js');
+		const { AgentMessageQueue } = await import('./entities/agent-message-queue.entity.js');
 		const { AgentBackgroundJob } = await import('./entities/agent-background-job.entity.js');
 		const { AgentHistory } = await import('./entities/agent-history.entity.js');
 		const { AgentCredentialDependency } = await import(
@@ -270,6 +275,7 @@ export class AgentsModule implements ModuleInterface {
 			AgentMessageEntity,
 			AgentExecutionThread,
 			AgentExecution,
+			AgentMessageQueue,
 			AgentBackgroundJob,
 			AgentHistory,
 			AgentCredentialDependency,
